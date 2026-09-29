@@ -308,46 +308,142 @@ LLM을 통해 구조화된 Event와 Search Text를 생성하도록 구성했습�
 Validation Set과 Test Set을 별도로 구성하여 Recall@1, Recall@3, MRR을 통해
 자연어 이미지 검색 성능을 정량적으로 평가했습니다.
 
-
 ### 5. 설치 및 실행 방법
 
 #### 5.1. 설치절차 및 실행 방법
 
-IZZIMA는 모바일 Frontend, Backend, AI Server를 각각 실행한 뒤 연동하여 사용할 수 있습니다.
+IZZIMA는 AI Server, Backend, Frontend를 각각 실행한 뒤 연동하여 사용할 수 있습니다.
+
+프로젝트의 기본 의존성은 루트 디렉토리의 `install_and_build.sh`를 통해 설치할 수 있습니다.
+
+```bash
+chmod +x install_and_build.sh
+./install_and_build.sh
+```
+
+각 구성 요소를 개별적으로 설치하고 실행하는 방법은 다음과 같습니다.
+
 
 ##### AI Server
 
-AI Pipeline은 NVIDIA RTX A5000 GPU가 설치된 Ubuntu Server에서 구동하며,
+AI Server는 NVIDIA GPU가 설치된 Ubuntu Server에서 구동하며,
 Qwen 계열 LLM의 추론에는 Ollama를 사용합니다.
 
-AI Server는 FastAPI 기반으로 구성되어 다음 Endpoint를 제공합니다.
+AI 서버 디렉터리로 이동한 뒤 Conda 가상환경을 활성화하고 필요한 패키지를 설치합니다.
+
+```bash
+cd project/ai
+conda activate izzima
+pip install -r requirements.txt
+```
+
+AI 서버를 실행합니다.
+
+```bash
+cd src
+CUDA_VISIBLE_DEVICES=2 uvicorn api:app --host 0.0.0.0 --port 8101
+```
+
+외부의 Backend에서 AI Server에 접근할 수 있도록 Cloudflare Tunnel을 실행합니다.
+
+```bash
+cloudflared tunnel --url http://localhost:8101
+```
+
+생성된 Cloudflare Tunnel 주소를 Backend `.env` 파일의 `AI_SERVER_URL`에 설정합니다.
+
+- 상태 확인: `https://<Cloudflare-Tunnel-주소>/health`
+- API 문서: `https://<Cloudflare-Tunnel-주소>/docs`
+
+AI Server는 다음 Endpoint를 제공합니다.
 
 - `/analyze` : 이미지 분석 및 Event 추출
 - `/embed-query` : 자연어 검색을 위한 Query Embedding 생성
 - `/health` : AI Server 상태 확인
 
-```bash
-cd project/ai
-
-# AI Server 설치 및 실행 명령어 추가 예정
-```
+시연 환경에서는 AI Server와 Cloudflare Tunnel을 미리 실행해 두므로,
+모바일 앱 사용자가 별도로 AI Server를 실행할 필요는 없습니다.
 
 
 ##### Backend
 
+Backend는 Python 3.12 환경에서 실행합니다.
+
+Backend 디렉터리로 이동한 뒤 가상환경을 생성하고 필요한 패키지를 설치합니다.
+
 ```bash
 cd project/backend
-
-# Backend 설치 및 실행 명령어 추가 예정
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
 ```
+
+`.env` 파일에 다음 환경변수를 설정합니다.
+
+```env
+SUPABASE_URL=
+SUPABASE_KEY=
+AI_SERVER_URL=
+```
+
+- `SUPABASE_URL`: Supabase 프로젝트 URL
+- `SUPABASE_KEY`: Supabase service_role key
+- `AI_SERVER_URL`: Cloudflare Tunnel을 통해 외부에 노출된 AI Server 주소
+
+환경변수 설정 후 Backend를 실행합니다.
+
+```bash
+uvicorn main:app --reload
+```
+
+실행 후 다음 주소에서 Backend 상태와 API 문서를 확인할 수 있습니다.
+
+- API 문서: `http://127.0.0.1:8000/docs`
+- 상태 확인: `http://127.0.0.1:8000/`
+
+Supabase Storage의 `images` 버킷은 Private로 설정되어 있어야 하며,
+자연어 검색 기능을 사용하기 위해서는 Supabase에 `match_images` 함수가 생성되어 있어야 합니다.
 
 
 ##### Frontend
 
+Frontend는 React Native와 Expo를 기반으로 실행합니다.
+
+Frontend 디렉터리로 이동한 뒤 필요한 패키지를 설치하고 환경변수 파일을 생성합니다.
+
 ```bash
 cd project/frontend
+npm install
+cp .env.example .env
+```
 
-# Frontend 설치 및 실행 명령어 추가 예정
+`.env` 파일에 다음 환경변수를 설정합니다.
+
+```env
+EXPO_PUBLIC_API_BASE_URL=
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+- `EXPO_PUBLIC_API_BASE_URL`: Backend Server 주소
+- `EXPO_PUBLIC_SUPABASE_URL`: Supabase 프로젝트 URL
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`: Supabase anon key
+
+환경변수 설정 후 Expo 개발 서버를 실행합니다.
+
+```bash
+npx expo start
+```
+
+터미널에 표시되는 QR코드를 Expo Go 앱으로 스캔하여 모바일 기기에서 실행할 수 있습니다.
+iOS Simulator는 `i`, Android Emulator는 `a` 키를 이용하여 실행할 수 있습니다.
+
+`.env` 값을 수정한 경우 개발 서버를 재시작해야 하며,
+필요한 경우 다음 명령어로 캐시를 초기화할 수 있습니다.
+
+```bash
+npx expo start -c
 ```
 
 
@@ -355,11 +451,12 @@ cd project/frontend
 
 | 증상 | 확인 및 해결 |
 | :---: | :---: |
-| AI Server 연결 실패 | AI Server 실행 여부와 서버 주소 확인 |
-| 이미지 업로드 실패 | 파일 형식, 크기 및 Storage 연결 상태 확인 |
-| 인증 오류 | Supabase 설정 및 Access Token 확인 |
-| 검색 결과가 반환되지 않음 | Embedding 생성 여부 및 pgvector 설정 확인 |
-
+| AI Server 연결 실패 | AI Server와 Cloudflare Tunnel 실행 여부 및 `AI_SERVER_URL` 확인 |
+| Backend 실행 직후 오류 발생 | `.env`의 `SUPABASE_URL`, `SUPABASE_KEY` 설정 확인 |
+| 이미지 분석 결과가 `null`로 저장됨 | `AI_SERVER_URL` 설정 및 Cloudflare Tunnel 주소 확인 |
+| `/search` 호출 시 503 오류 | AI Server의 Query Embedding 생성 및 연결 상태 확인 |
+| 이미지 조회 시 403 오류 | Signed URL 만료 여부 확인 후 이미지 목록 또는 상세 정보 재조회 |
+| Frontend 환경변수가 반영되지 않음 | Expo 개발 서버 재시작 또는 `npx expo start -c` 실행 |
 
 ### 6. 소개 자료 및 시연 영상
 
