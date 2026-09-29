@@ -373,9 +373,7 @@ cd project/frontend
 
 #### 6.2. 시연 영상
 
-<!-- YouTube 업로드 후 VIDEO_ID와 URL을 실제 값으로 변경 -->
-
-[![IZZIMA 시연 영상](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](유튜브 영상 URL)
+[IZZIMA 프로젝트 시연 영상](https://opus.pusan.ac.kr/contest/6/teams/view/166)
 
 
 ### 7. 팀 구성
