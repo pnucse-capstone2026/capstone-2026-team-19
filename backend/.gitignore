@@ -1,0 +1,17 @@
+# dependencies
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# env
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+CLAUDE.md
+.claude/
