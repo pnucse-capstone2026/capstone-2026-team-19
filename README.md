@@ -371,9 +371,12 @@ cd project/frontend
 - [최종 발표자료 (PPTX)](docs/03.발표자료/2026전기_발표자료_19_졸크크.pptx)
 
 
+
 #### 6.2. 시연 영상
 
-[IZZIMA 프로젝트 시연 영상](https://opus.pusan.ac.kr/contest/6/teams/view/166)
+[![IZZIMA 프로젝트 시연 영상](https://img.youtube.com/vi/UoJhWh1BXdc/0.jpg)](https://www.youtube.com/watch?v=UoJhWh1BXdc)
+
+[IZZIMA 프로젝트 시연 영상](https://www.youtube.com/watch?v=UoJhWh1BXdc)
 
 
 ### 7. 팀 구성
